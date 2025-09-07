@@ -36,8 +36,8 @@ jobs:
       - name: Create VCS sandbox
         run: |
           git checkout -b release-prep-${{ inputs.new_version }}
-          CLEAN_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//')
-          git checkout -b "release-$CLEAN_VERSION"
+          MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
+          git checkout -b "release-$MAJOR_MINOR_VERSION"
           git checkout release-prep-${{ inputs.new_version }}
       - name: Set up the Go@${{ env.GO_VERSION }} environment
         uses: actions/setup-go@v5
