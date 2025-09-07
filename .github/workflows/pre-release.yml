@@ -73,6 +73,8 @@ jobs:
           git commit -m "chore: Cut ${{ inputs.new_version }}"
           git push origin HEAD:release-${{ inputs.new_version }} --force-with-lease
       - name: 'Run benchmark tests'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Finding latest release tag..."
           LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
