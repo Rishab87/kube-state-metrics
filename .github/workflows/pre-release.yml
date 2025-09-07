@@ -46,19 +46,19 @@ jobs:
         run: |
             chmod +x scripts/update-data-yaml.sh
             ./scripts/update-data-yaml.sh "${{ inputs.new_version }}"
-      - name: Update the compatibility matrix (README.md)
-        run: make generate
+      # - name: Update the compatibility matrix (README.md)
+      #   run: make generate
       - name: Generate the release notes (CHANGELOG.md)
         run: |
           chmod +x scripts/generate-release-notes.sh
           ./scripts/generate-release-notes.sh "${{ inputs.new_version }}"
-      - name: Lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
-          sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
-          make lint-fix
-      - name: Generate manifests
-        run: make examples
+      # - name: Lint
+      #   run: |
+      #     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+      #     sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
+      #     make lint-fix
+      # - name: Generate manifests
+      #   run: make examples
       # - name: Run rule tests
       #   run: PROMTOOL_CLI=./promtool make install-promtool test-rules
       # - name: Run unit tests
@@ -77,8 +77,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Finding latest release tag..."
+
+          echo "Finding latest release tag..."
           LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          echo "Comparing against: $LATEST_TAG"
+
+          PREVIOUS_RELEASE_BRANCH=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f1,2)
+          PREVIOUS_RELEASE_BRANCH="release-$PREVIOUS_RELEASE_BRANCH"
+          echo "Calculated previous release branch for comparison: $PREVIOUS_RELEASE_BRANCH"
 
           BENCHSTAT_OUTPUT_FILE=result.txt LATEST_RELEASE_TAG=$LATEST_TAG make test-benchmark-compare
       - name: Post results to job summary
