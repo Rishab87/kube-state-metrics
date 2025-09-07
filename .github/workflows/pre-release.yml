@@ -51,7 +51,7 @@ jobs:
       - name: Generate the release notes (CHANGELOG.md)
         run: |
           chmod +x scripts/generate-release-notes.sh
-          ./scripts/generate-release-notes.sh
+          ./scripts/generate-release-notes.sh "${{ inputs.new_version }}"
       - name: Install tools
         run: make install-tools
       - name: Lint
