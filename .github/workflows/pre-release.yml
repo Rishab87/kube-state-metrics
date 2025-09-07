@@ -77,15 +77,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Finding latest release tag..."
-
-          echo "Finding latest release tag..."
           LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-
-          PREVIOUS_RELEASE_BRANCH=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f1,2)
-          PREVIOUS_RELEASE_BRANCH="release-$PREVIOUS_RELEASE_BRANCH"
-          echo "Calculated previous release branch for comparison: $PREVIOUS_RELEASE_BRANCH"
-
-          BENCHSTAT_OUTPUT_FILE=result.txt LATEST_RELEASE_TAG=$LATEST_TAG make test-benchmark-compare
+          echo "Comparing against the latest tag: $LATEST_TAG"
+          export BENCHSTAT_OUTPUT_FILE=benchmark_results.txt
+          ./tests/compare_benchmarks.sh $LATEST_TAG 1
       - name: Post results to job summary
         run: |
           echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
