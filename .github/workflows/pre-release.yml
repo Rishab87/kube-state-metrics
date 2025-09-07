@@ -76,11 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Finding latest release tag..."
-          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          echo "Comparing against the latest tag: $LATEST_TAG"
-          export BENCHSTAT_OUTPUT_FILE=benchmark_results.txt
-          ./tests/compare_benchmarks.sh $LATEST_TAG 1
+          BENCHSTAT_OUTPUT_FILE=result.txt make test-benchmark-compare
       - name: Post results to job summary
         run: |
           echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
