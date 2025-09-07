@@ -47,7 +47,9 @@ jobs:
       - name: Update the compatibility matrix (README.md)
         run: make generate
       - name: Generate the release notes (CHANGELOG.md)
-        run: ./scripts/generate-release-notes.sh
+        run: |
+          chmod +x scripts/generate-release-notes.sh
+          ./scripts/generate-release-notes.sh
       - name: Install tools
         run: make install-tools
       - name: Lint
