@@ -1,0 +1,103 @@
+name: Pre-Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: 'The new release version (e.g., v2.10.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  
+env:
+  GO_VERSION: "^1.24.6"
+  GOLANGCI_LINT_VERSION: "v2.4.0"
+  E2E_SETUP_KIND: yes
+  E2E_SETUP_KUBECTL: yes
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Validate version format'
+        run: |
+          if [[ ! "${{ inputs.new_version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version format is incorrect. It must be in the format 'vX.Y.Z'."
+            exit 1
+          fi
+          echo "Version format is valid."
+      - name: Checkout into the corresponding release branch
+        uses: actions/checkout@v4
+      - name: Create VCS sandbox
+        run: |
+          git checkout -b release-prep-${{ inputs.new_version }}
+      - name: Set up the Go@${{ env.GO_VERSION }} environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Update the VERSION manifest
+        run: echo "${{ inputs.new_version }}" | sed 's/^v//' > VERSION
+      - name: update data.yaml
+        run: |
+            chmod +x scripts/update_data_yaml.sh
+            ./scripts/update_data_yaml.sh "${{ inputs.new_version }}"
+      - name: Update the compatibility matrix (README.md)
+        run: make generate
+      - name: Generate the release notes (CHANGELOG.md)
+        run: ./scripts/generate-release-notes.sh
+      - name: Install tools
+        run: make install-tools
+      - name: Lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+          sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
+          make lint-fix
+      - name: Generate manifests
+        run: make examples
+      - name: Run rule tests
+        run: PROMTOOL_CLI=./promtool make install-promtool test-rules
+      - name: Run unit tests
+        run: make test-unit
+      - name: Run end-to-end tests
+        run: make e2e
+      - name: Update the remote and commit the changes
+        run: |
+          git config --local user.email "ksm-release-bot@mock-k8s.io"
+          git config --local user.name "KSM Release Bot"
+          git add .
+          git commit -m "chore: Cut ${{ inputs.new_version }}"
+          git push origin HEAD:release-${{ inputs.new_version }} --force-with-lease
+      - name: 'Get latest release tag for benchmark' 
+        id: get_latest_tag
+        run: |
+          # Fetches the tag name of the latest published release
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "Latest release tag is $LATEST_TAG"
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Run benchmark tests against previous release'
+        run: |
+          echo "Comparing benchmarks against release ${{ steps.get_latest_tag.outputs.tag }}"
+          LATEST_RELEASE_TAG=${{ steps.get_latest_tag.outputs.tag }} make test-benchmark-compare
+      - name: Validate docs
+        run: make doccheck
+      - name: Validate manifests
+        run: make validate-manifests
+      - name: Validate go modules
+        run: make validate-modules
+      - name: Create a pull request
+        run: |
+          gh pr create \
+            --title "chore: Cut ${{ inputs.new_version }}" \
+            --body "This PR was automatically created by the release workflow, and should be targeted to the corresponding release branch." \
+            --base main \
+            --head release-${{ inputs.new_version }}
+            --reviewer @sig-instrumentation-approvers \
+            --assignee @sig-instrumentation-leads
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
