@@ -52,8 +52,6 @@ jobs:
         run: |
           chmod +x scripts/generate-release-notes.sh
           ./scripts/generate-release-notes.sh "${{ inputs.new_version }}"
-      - name: Install tools
-        run: make install-tools
       - name: Lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
