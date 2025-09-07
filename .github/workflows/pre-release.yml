@@ -31,6 +31,8 @@ jobs:
           echo "Version format is valid."
       - name: Checkout into the corresponding release branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Create VCS sandbox
         run: |
           git checkout -b release-prep-${{ inputs.new_version }}
@@ -72,18 +74,17 @@ jobs:
           git push origin HEAD:release-${{ inputs.new_version }} --force-with-lease
       - name: 'Run benchmark tests'
         run: |
-          BENCHSTAT_OUTPUT_FILE=result.txt make test-benchmark-compare
-      - run: |
+          echo "Finding latest release tag..."
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "Comparing against: $LATEST_TAG"
+
+          BENCHSTAT_OUTPUT_FILE=result.txt LATEST_RELEASE_TAG=$LATEST_TAG make test-benchmark-compare
+      - name: Post results to job summary
+        run: |
+          echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           cat result.txt >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          cat <<EOL >> "$GITHUB_STEP_SUMMARY"
-          <hr />
-          The table shows the median and 95% confidence interval (CI) summaries for each benchmark comparing the HEAD and the BASE, and an A/B comparison under "vs base". The last column shows the statistical p-value with ten runs (n=10).
-          The last row has the Geometric Mean (geomean) for the given rows in the table.
-          Refer to <a href="https://pkg.go.dev/golang.org/x/perf/cmd/benchstat">benchstat's documentation</a> for more help.
-          EOL
-
       - name: Validate docs
         run: make doccheck
       - name: Validate manifests
