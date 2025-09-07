@@ -94,7 +94,7 @@ jobs:
             --title "chore: Cut ${{ inputs.new_version }}" \
             --body "This PR was automatically created by the release workflow, and should be targeted to the corresponding release branch." \
             --base main \
-            --head release-${{ inputs.new_version }}
+            --head release-${{ inputs.new_version }} \
             --reviewer @sig-instrumentation-approvers \
             --assignee @sig-instrumentation-leads
         env:
