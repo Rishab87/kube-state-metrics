@@ -25,6 +25,6 @@ if [[ $(uname) == "Darwin" ]]; then
 fi
 
 # Replace the first line of the CHANGELOG.md file with the provided version.
-$SED -i "1s|.*|## $new_version / $(date +'%Y-%m-%d')|" "${CHANGELOG_FILE}"
+$SED -i "3i ## $new_version / $(date +'%Y-%m-%d')\n" "${CHANGELOG_FILE}"
 
 echo "CHANGELOG.md updated successfully."
