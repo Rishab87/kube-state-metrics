@@ -31,6 +31,8 @@ jobs:
           echo "Version format is valid."
       - name: Checkout into the corresponding release branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Create VCS sandbox
         run: |
           git checkout -b release-prep-${{ inputs.new_version }}
