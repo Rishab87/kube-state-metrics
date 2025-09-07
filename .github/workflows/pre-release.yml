@@ -31,8 +31,6 @@ jobs:
           echo "Version format is valid."
       - name: Checkout into the corresponding release branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Create VCS sandbox
         run: |
           git checkout -b release-prep-${{ inputs.new_version }}
@@ -72,20 +70,20 @@ jobs:
           git add .
           git commit -m "chore: Cut ${{ inputs.new_version }}"
           git push origin HEAD:release-${{ inputs.new_version }} --force-with-lease
-      - name: 'Get latest release tag for benchmark' 
-        id: get_latest_tag
+      - name: 'Run benchmark tests'
         run: |
-          # Fetches the tag name of the latest published release
-          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          echo "Latest release tag is $LATEST_TAG"
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BENCHSTAT_OUTPUT_FILE=result.txt make test-benchmark-compare
+      - run: |
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          cat result.txt >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          cat <<EOL >> "$GITHUB_STEP_SUMMARY"
+          <hr />
+          The table shows the median and 95% confidence interval (CI) summaries for each benchmark comparing the HEAD and the BASE, and an A/B comparison under "vs base". The last column shows the statistical p-value with ten runs (n=10).
+          The last row has the Geometric Mean (geomean) for the given rows in the table.
+          Refer to <a href="https://pkg.go.dev/golang.org/x/perf/cmd/benchstat">benchstat's documentation</a> for more help.
+          EOL
 
-      - name: 'Run benchmark tests against previous release'
-        run: |
-          echo "Comparing benchmarks against release ${{ steps.get_latest_tag.outputs.tag }}"
-          LATEST_RELEASE_TAG=${{ steps.get_latest_tag.outputs.tag }} make test-benchmark-compare
       - name: Validate docs
         run: make doccheck
       - name: Validate manifests
