@@ -1,5 +1,7 @@
 # Changelog
 
+## v2.18.0 / 2025-09-07
+
 ## v2.17.0 / 2025-09-01
 
 * This release builds with Go `v1.24.6`
