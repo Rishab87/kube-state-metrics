@@ -42,8 +42,8 @@ jobs:
         run: echo "${{ inputs.new_version }}" | sed 's/^v//' > VERSION
       - name: update data.yaml
         run: |
-            chmod +x scripts/update_data_yaml.sh
-            ./scripts/update_data_yaml.sh "${{ inputs.new_version }}"
+            chmod +x scripts/update-data-yaml.sh
+            ./scripts/update-data-yaml.sh "${{ inputs.new_version }}"
       - name: Update the compatibility matrix (README.md)
         run: make generate
       - name: Generate the release notes (CHANGELOG.md)
