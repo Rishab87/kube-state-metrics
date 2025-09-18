@@ -80,6 +80,9 @@ jobs:
           git config --local user.name "KSM Release Bot"
           git add .
           git commit -m "chore: Cut ${{ inputs.new_version }}"
+          MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
+          git push origin release-$MAJOR_MINOR_VERSION
+          git push origin release-prep-${{ inputs.new_version }}
       # - name: 'Run benchmark tests'
       #   run: |
       #     BENCHSTAT_OUTPUT_FILE=result.txt ./tests/compare_benchmarks.sh main 2
