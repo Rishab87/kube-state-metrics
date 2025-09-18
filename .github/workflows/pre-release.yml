@@ -35,7 +35,13 @@ jobs:
         run: |
           git checkout -b release-prep-${{ inputs.new_version }}
           MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
-          git checkout -b "release-$MAJOR_MINOR_VERSION"
+          if git show-ref --verify --quiet refs/remotes/origin/release-$MAJOR_MINOR_VERSION; then
+            echo "Release branch release-$MAJOR_MINOR_VERSION already exists, switching to it"
+            git checkout -b release-$MAJOR_MINOR_VERSION origin/release-$MAJOR_MINOR_VERSION
+          else
+            echo "Creating new release branch release-$MAJOR_MINOR_VERSION"
+            git checkout -b release-$MAJOR_MINOR_VERSION
+          fi          
           git checkout release-prep-${{ inputs.new_version }}
       - name: Set up the Go@${{ env.GO_VERSION }} environment
         uses: actions/setup-go@v5
@@ -49,10 +55,10 @@ jobs:
             ./scripts/update-data-yaml.sh "${{ inputs.new_version }}"
       - name: Update the compatibility matrix (README.md)
         run: make generate
-      - name: Generate the release notes (CHANGELOG.md)
+      - name: Generate the release date for unreleased (CHANGELOG.md)
         run: |
-          chmod +x scripts/generate-release-notes.sh
-          ./scripts/generate-release-notes.sh "${{ inputs.new_version }}"
+          chmod +x scripts/generate-release-date.sh
+          ./scripts/generate-release-date.sh "${{ inputs.new_version }}"
       - name: Lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
@@ -72,7 +78,6 @@ jobs:
           git config --local user.name "KSM Release Bot"
           git add .
           git commit -m "chore: Cut ${{ inputs.new_version }}"
-          git push origin HEAD:release-${{ inputs.new_version }} --force-with-lease
       - name: 'Run benchmark tests'
         run: |
           BENCHSTAT_OUTPUT_FILE=result.txt ./tests/compare_benchmarks.sh main 2
@@ -90,10 +95,76 @@ jobs:
         run: make validate-modules
       - name: Create a pull request
         run: |
+          MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
+          
+          # Get the previous tag (latest existing tag)
+          PREV_TAG=$(git tag --sort=-version:refname | head -n1 || echo "")
+          
+          # Set up range for PR search - since we don't have the new tag yet, use HEAD
+          if [[ -n "$PREV_TAG" ]]; then
+            PREV_TAG_DATE="$(git show -s --format=%cI "$PREV_TAG" 2>/dev/null || true)"
+            RANGE="${PREV_TAG}..HEAD"
+          else
+            PREV_TAG_DATE="1970-01-01T00:00:00Z"
+            PREV_REF="$(git rev-list --max-parents=0 HEAD)"
+            RANGE="${PREV_REF}..HEAD"
+          fi
+          
+          # Get date ranges for GitHub PR search
+          PREV_DATE_SHORT="$(date -d "$PREV_TAG_DATE" +%Y-%m-%d 2>/dev/null || echo "1970-01-01")"
+          TAG_DATE_SHORT="$(date -u +%Y-%m-%d)"
+          
+          # Extract user-facing changelog section for this version
+          CHANGELOG_SECTION=$(awk '/^## '"${{ inputs.new_version }}"'/{flag=1; next} /^## /{if(flag) exit} flag' CHANGELOG.md | grep -E '^\s*\*\s*\[' | sed 's/^/    /' || echo "    No user-facing changes found for this version.")
+          
+          # Get full changelog using GitHub API (all PRs in the range)
+          PR_LINES="$(gh pr list --state merged --search "merged:${PREV_DATE_SHORT}..${TAG_DATE_SHORT}" --json number,title,author --limit 1000 --template '{{range .}}{{.number}}|{{.title}}|{{.author.login}}{{"\n"}}{{end}}')" || true
+          
+          FULL_CHANGELOG_LINES=()
+          if [[ -n "$PR_LINES" ]]; then
+            while IFS= read -r line; do
+              if [[ -n "$line" ]]; then
+                prnum="${line%%|*}"
+                rest="${line#*|}"
+                title="${rest%%|*}"
+                login="${rest##*|}"
+                FULL_CHANGELOG_LINES+=("    - ${title} by @${login} in #${prnum}")
+              fi
+            done <<< "$PR_LINES"
+          fi
+          
+          # Build full changelog text
+          FULL_CHANGELOG_TEXT=""
+          if [[ ${#FULL_CHANGELOG_LINES[@]} -gt 0 ]]; then
+            printf -v FULL_CHANGELOG_TEXT "%s\n" "${FULL_CHANGELOG_LINES[@]}"
+          else
+            FULL_CHANGELOG_TEXT="    (no merged PRs found in this release)"
+          fi
+          
+          # Create compare URL
+          COMPARE_URL=""
+          if [[ -n "$PREV_TAG" ]]; then
+            COMPARE_URL="**Full Changelog**: https://github.com/kubernetes/kube-state-metrics/compare/${PREV_TAG}...${{ inputs.new_version }}"
+          else
+            COMPARE_URL="**Full Changelog**: First release"
+          fi
+
+          PR_BODY="This PR was automatically created by the release workflow.
+
+          ## Changelog
+
+          $CHANGELOG_SECTION
+
+          ## Full Changelog
+
+          $FULL_CHANGELOG_TEXT
+
+          $COMPARE_URL"
+
           gh pr create \
             --title "chore: Cut ${{ inputs.new_version }}" \
-            --body "This PR was automatically created by the release workflow, and should be targeted to the corresponding release branch." \
-            --base main \
-            --head release-${{ inputs.new_version }} \
+            --body "$PR_BODY" \
+            --base release-$MAJOR_MINOR_VERSION \
+            --head release-prep-${{ inputs.new_version }} \
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
