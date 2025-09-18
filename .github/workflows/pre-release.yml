@@ -137,7 +137,9 @@ jobs:
             FULL_CHANGELOG_TEXT="    (no merged PRs found in this release)"
           fi
           
-          PR_BODY="This PR was automatically created by the release workflow.
+          # Create PR body file to avoid quote issues
+          cat > pr_body.txt << EOF
+          This PR was automatically created by the release workflow.
 
           ## Changelog
 
@@ -146,11 +148,13 @@ jobs:
           ## Full Changelog
 
           $FULL_CHANGELOG_TEXT
+          EOF
 
           gh pr create \
             --title "chore: Cut ${{ inputs.new_version }}" \
-            --body "$PR_BODY" \
+            --body-file pr_body.txt \
             --base release-$MAJOR_MINOR_VERSION \
-            --head release-prep-${{ inputs.new_version }} 
+            --head release-prep-${{ inputs.new_version }}           
+          rm pr_body.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
