@@ -41,6 +41,7 @@ jobs:
           else
             echo "Creating new release branch release-$MAJOR_MINOR_VERSION"
             git checkout -b release-$MAJOR_MINOR_VERSION
+            git push origin release-$MAJOR_MINOR_VERSION
           fi          
           git checkout release-prep-${{ inputs.new_version }}
       - name: Set up the Go@${{ env.GO_VERSION }} environment
@@ -68,12 +69,12 @@ jobs:
         run: |
             make clean || true
             VERSION="${{ inputs.new_version }}" make examples
-      # - name: Run rule tests
-      #   run: PROMTOOL_CLI=./promtool make install-promtool test-rules
-      # - name: Run unit tests
-      #   run: make test-unit
-      # - name: Run end-to-end tests
-      #   run: make e2e
+      - name: Run rule tests
+        run: PROMTOOL_CLI=./promtool make install-promtool test-rules
+      - name: Run unit tests
+        run: make test-unit
+      - name: Run end-to-end tests
+        run: make e2e
       - name: Update the remote and commit the changes
         run: |
           git config --local user.email "ksm-release-bot@mock-k8s.io"
@@ -81,23 +82,22 @@ jobs:
           git add .
           git commit -m "chore: Cut ${{ inputs.new_version }}"
           MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
-          git push origin release-$MAJOR_MINOR_VERSION
           git push origin release-prep-${{ inputs.new_version }}
-      # - name: 'Run benchmark tests'
-      #   run: |
-      #     BENCHSTAT_OUTPUT_FILE=result.txt ./tests/compare_benchmarks.sh main 2
-      # - name: Post results to job summary
-      #   run: |
-      #     echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
-      #     echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-      #     cat result.txt >> "$GITHUB_STEP_SUMMARY"
-      #     echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-      # - name: Validate docs
-      #   run: make doccheck
-      # - name: Validate manifests
-      #   run: make validate-manifests
-      # - name: Validate go modules
-      #   run: make validate-modules
+      - name: 'Run benchmark tests'
+        run: |
+          BENCHSTAT_OUTPUT_FILE=result.txt ./tests/compare_benchmarks.sh main 2
+      - name: Post results to job summary
+        run: |
+          echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          cat result.txt >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Validate docs
+        run: make doccheck
+      - name: Validate manifests
+        run: make validate-manifests
+      - name: Validate go modules
+        run: make validate-modules
       - name: Create a pull request
         run: |
           MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
@@ -157,7 +157,8 @@ jobs:
             --title "chore: Cut ${{ inputs.new_version }}" \
             --body-file pr_body.txt \
             --base release-$MAJOR_MINOR_VERSION \
-            --head release-prep-${{ inputs.new_version }}           
+            --head release-prep-${{ inputs.new_version }} 
+          
           rm pr_body.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
