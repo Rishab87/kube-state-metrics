@@ -65,7 +65,9 @@ jobs:
           sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
           make lint-fix
       - name: Generate manifests
-        run: make examples
+        run: |
+            make clean || true
+            VERSION="${{ inputs.new_version }}" make examples
       - name: Run rule tests
         run: PROMTOOL_CLI=./promtool make install-promtool test-rules
       - name: Run unit tests
@@ -97,10 +99,8 @@ jobs:
         run: |
           MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
           
-          # Get the previous tag (latest existing tag)
           PREV_TAG=$(git tag --sort=-version:refname | head -n1 || echo "")
           
-          # Set up range for PR search - since we don't have the new tag yet, use HEAD
           if [[ -n "$PREV_TAG" ]]; then
             PREV_TAG_DATE="$(git show -s --format=%cI "$PREV_TAG" 2>/dev/null || true)"
             RANGE="${PREV_TAG}..HEAD"
@@ -110,14 +110,11 @@ jobs:
             RANGE="${PREV_REF}..HEAD"
           fi
           
-          # Get date ranges for GitHub PR search
           PREV_DATE_SHORT="$(date -d "$PREV_TAG_DATE" +%Y-%m-%d 2>/dev/null || echo "1970-01-01")"
           TAG_DATE_SHORT="$(date -u +%Y-%m-%d)"
           
-          # Extract user-facing changelog section for this version
           CHANGELOG_SECTION=$(awk '/^## '"${{ inputs.new_version }}"'/{flag=1; next} /^## /{if(flag) exit} flag' CHANGELOG.md | grep -E '^\s*\*\s*\[' | sed 's/^/    /' || echo "    No user-facing changes found for this version.")
           
-          # Get full changelog using GitHub API (all PRs in the range)
           PR_LINES="$(gh pr list --state merged --search "merged:${PREV_DATE_SHORT}..${TAG_DATE_SHORT}" --json number,title,author --limit 1000 --template '{{range .}}{{.number}}|{{.title}}|{{.author.login}}{{"\n"}}{{end}}')" || true
           
           FULL_CHANGELOG_LINES=()
@@ -133,7 +130,6 @@ jobs:
             done <<< "$PR_LINES"
           fi
           
-          # Build full changelog text
           FULL_CHANGELOG_TEXT=""
           if [[ ${#FULL_CHANGELOG_LINES[@]} -gt 0 ]]; then
             printf -v FULL_CHANGELOG_TEXT "%s\n" "${FULL_CHANGELOG_LINES[@]}"
@@ -141,14 +137,6 @@ jobs:
             FULL_CHANGELOG_TEXT="    (no merged PRs found in this release)"
           fi
           
-          # Create compare URL
-          COMPARE_URL=""
-          if [[ -n "$PREV_TAG" ]]; then
-            COMPARE_URL="**Full Changelog**: https://github.com/kubernetes/kube-state-metrics/compare/${PREV_TAG}...${{ inputs.new_version }}"
-          else
-            COMPARE_URL="**Full Changelog**: First release"
-          fi
-
           PR_BODY="This PR was automatically created by the release workflow.
 
           ## Changelog
@@ -158,8 +146,6 @@ jobs:
           ## Full Changelog
 
           $FULL_CHANGELOG_TEXT
-
-          $COMPARE_URL"
 
           gh pr create \
             --title "chore: Cut ${{ inputs.new_version }}" \
