@@ -151,6 +151,6 @@ jobs:
             --title "chore: Cut ${{ inputs.new_version }}" \
             --body "$PR_BODY" \
             --base release-$MAJOR_MINOR_VERSION \
-            --head release-prep-${{ inputs.new_version }} \
+            --head release-prep-${{ inputs.new_version }} 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
