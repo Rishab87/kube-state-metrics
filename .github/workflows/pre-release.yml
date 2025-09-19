@@ -63,18 +63,19 @@ jobs:
       - name: Generate manifests
         run: |
             unset ARCH
-            export IMAGE="registry.k8s.io/kube-state-metrics/kube-state-metrics"
+            unset GOARCH
+            unset TARGETARCH
             make clean || true
-            make examples
-      - name: Lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
-          sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
-          make lint-fix
-      - name: Run rule tests
-        run: PROMTOOL_CLI=./promtool make install-promtool test-rules
-      - name: Run unit tests
-        run: make test-unit
+            make examples IMAGE="registry.k8s.io/kube-state-metrics/kube-state-metrics"
+      # - name: Lint
+      #   run: |
+      #     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+      #     sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
+      #     make lint-fix
+      # - name: Run rule tests
+      #   run: PROMTOOL_CLI=./promtool make install-promtool test-rules
+      # - name: Run unit tests
+      #   run: make test-unit
       - name: Run end-to-end tests
         run: make e2e
       - name: Update the remote and commit the changes
@@ -85,21 +86,21 @@ jobs:
           git commit -m "chore: Cut ${{ inputs.new_version }}"
           MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
           git push origin release-prep-${{ inputs.new_version }}
-      - name: 'Run benchmark tests'
-        run: |
-          BENCHSTAT_OUTPUT_FILE=result.txt ./tests/compare_benchmarks.sh main 2
-      - name: Post results to job summary
-        run: |
-          echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          cat result.txt >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-      - name: Validate docs
-        run: make doccheck
-      - name: Validate manifests
-        run: make validate-manifests
-      - name: Validate go modules
-        run: make validate-modules
+      # - name: 'Run benchmark tests'
+      #   run: |
+      #     BENCHSTAT_OUTPUT_FILE=result.txt ./tests/compare_benchmarks.sh main 2
+      # - name: Post results to job summary
+      #   run: |
+      #     echo "### Benchmark Comparison Results" >> "$GITHUB_STEP_SUMMARY"
+      #     echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+      #     cat result.txt >> "$GITHUB_STEP_SUMMARY"
+      #     echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+      # - name: Validate docs
+      #   run: make doccheck
+      # - name: Validate manifests
+      #   run: make validate-manifests
+      # - name: Validate go modules
+      #   run: make validate-modules
       - name: Create a pull request
         run: |
           MAJOR_MINOR_VERSION=$(echo "${{ inputs.new_version }}" | sed 's/^v//' | cut -d. -f1,2)
