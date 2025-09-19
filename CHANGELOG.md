@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.20.0 / 2025-09-19
+
 * This release builds with Go `v1.24.6`
 * This release builds with `k8s.io/client-go`: `v0.33.4`
 * This release is the last release that has endpoint metrics enabled by default. In the next release we will enable endpointslices metrics and disable endpoint metrics by default, since the endpoint resources are deprecated. You can still alter this behaviour in kube-state-metrics' config.
