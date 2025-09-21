@@ -73,13 +73,8 @@ jobs:
       #   run: make test-unit
       - name: Run end-to-end tests
         run: |
-          set -euo pipefail
-          TAG="${{ inputs.new_version }}"
-          ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-          docker tag registry.k8s.io/kube-state-metrics/kube-state-metrics-${ARCH}:${TAG} registry.k8s.io/kube-state-metrics/kube-state-metrics:${TAG}
-          kind load docker-image registry.k8s.io/kube-state-metrics/kube-state-metrics:${TAG}
-          export KUBE_STATE_METRICS_IMAGE_NAME="registry.k8s.io/kube-state-metrics/kube-state-metrics"
           make e2e
+          find examples -name "*.yaml" -exec sed -i 's|registry\.k8s\.io/kube-state-metrics/kube-state-metrics-\(amd64\|arm64\)|registry.k8s.io/kube-state-metrics/kube-state-metrics|g' {} \;
       - name: Update the remote and commit the changes
         run: |
           git config --local user.email "ksm-release-bot@mock-k8s.io"
