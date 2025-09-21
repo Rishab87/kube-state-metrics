@@ -74,7 +74,7 @@ jobs:
       - name: Run end-to-end tests
         run: |
           make e2e
-          find examples -name "*.yaml" -exec sed -i 's|registry\.k8s\.io/kube-state-metrics/kube-state-metrics-\(amd64\|arm64\)|registry.k8s.io/kube-state-metrics/kube-state-metrics|g' {} \;
+          find examples -name "*.yaml" -type f -exec sed -i 's|kube-state-metrics-amd64|kube-state-metrics|g; s|kube-state-metrics-arm64|kube-state-metrics|g' {} \;
       - name: Update the remote and commit the changes
         run: |
           git config --local user.email "ksm-release-bot@mock-k8s.io"
