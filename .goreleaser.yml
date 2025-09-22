@@ -2,9 +2,29 @@ version: 2
 
 project_name: kube-state-metrics
 
-builds: []
+builds:
+  - skip: true
 
 release:
   prerelease: auto
+  draft: true
   header: |
     {{ .ReleaseNotes }}
+
+changelog:
+  use: github            # use git log to generate groups
+  sort: asc
+  abbrev: -1          # remove commit SHA if you want
+  format: "{{.Message}} by @{{.AuthorUsername}} in <{{.URL}}>" 
+  groups:
+    - title: "FEATURE"
+      regexp: "^feat"
+      order: 0
+    - title: "BUGFIX"
+      regexp: "^fix"
+      order: 1
+    - title: "ENHANCEMENT"
+      regexp: "^chore|^refactor|^perf"
+      order: 2
+    - title: "OTHER"
+      order: 999
