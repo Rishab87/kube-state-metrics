@@ -8,25 +8,3 @@ release:
   prerelease: auto
   header: |
     {{ .ReleaseNotes }}
-
-changelog:
-  use: github
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
-      - '^chore:'
-  groups:
-    - title: Features
-      regexp: '(?i)^feat'
-      order: 0
-    - title: Bug Fixes
-      regexp: '(?i)^fix'
-      order: 1
-    - title: Chores
-      regexp: '(?i)^chore'
-      order: 2
-    - title: Other
-      regexp: '(?i)^(refactor|build|perf|ci|style)'
-      order: 999
