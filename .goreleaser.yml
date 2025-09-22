@@ -1,0 +1,49 @@
+project_name: kube-state-metrics
+
+builds:
+- env: [ CGO_ENABLED=0 ]
+  goos: [ linux, windows, darwin ]
+
+release:
+  prerelease: auto
+  header: |
+    ## Changelog
+    {{- range .Groups }}
+    {{- if and (ne .Title "Other") (ne .Title "Chores") }}
+    {{- range .Items }}
+    * [{{- if contains "feat" .Message }}FEATURE{{- else if contains "fix" .Message }}BUGFIX{{- else }}ENHANCEMENT{{- end }}] {{ .Message }} by @{{ .AuthorUsername }} in {{ .URL }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+
+    ## Full Changelog
+    {{- range .Groups }}
+    {{- range .Items }}
+    - {{ .Message }} by @{{ .AuthorUsername }} in #{{ .PullRequestNumber }}
+    {{- end }}
+    {{- end }}
+
+    ## New Contributors
+    *(This section cannot be generated automatically by GoReleaser's template engine)*
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^chore:'
+  groups:
+  - title: Features
+    regexp: '(?i)^feat'
+    order: 0
+  - title: Bug Fixes
+    regexp: '(?i)^fix'
+    order: 1
+  - title: Chores
+    regexp: '(?i)^chore'
+    order: 2
+  - title: Other
+    regexp: '(?i)^(refactor|build|perf|ci|style)'
+    order: 999
