@@ -1,49 +1,49 @@
-project_name: kube-state-metrics
+version: 2
 
-builds:
-- env: [ CGO_ENABLED=0 ]
-  goos: [ linux, windows, darwin ]
+builds: []
 
-release:
-  prerelease: auto
-  header: |
-    ## Changelog
-    {{- range .Groups }}
-    {{- if and (ne .Title "Other") (ne .Title "Chores") }}
-    {{- range .Items }}
-    * [{{- if contains "feat" .Message }}FEATURE{{- else if contains "fix" .Message }}BUGFIX{{- else }}ENHANCEMENT{{- end }}] {{ .Message }} by @{{ .AuthorUsername }} in {{ .URL }}
-    {{- end }}
-    {{- end }}
-    {{- end }}
-
-    ## Full Changelog
-    {{- range .Groups }}
-    {{- range .Items }}
-    - {{ .Message }} by @{{ .AuthorUsername }} in #{{ .PullRequestNumber }}
-    {{- end }}
-    {{- end }}
-
-    ## New Contributors
-    *(This section cannot be generated automatically by GoReleaser's template engine)*
+archives:
+  - id: default
+    format: tar.gz
+    files:
+      - LICENSE
+      - README.md
 
 changelog:
   use: github
-  sort: asc
-  filters:
-    exclude:
-    - '^docs:'
-    - '^test:'
-    - '^chore:'
+
   groups:
-  - title: Features
-    regexp: '(?i)^feat'
-    order: 0
-  - title: Bug Fixes
-    regexp: '(?i)^fix'
-    order: 1
-  - title: Chores
-    regexp: '(?i)^chore'
-    order: 2
-  - title: Other
-    regexp: '(?i)^(refactor|build|perf|ci|style)'
-    order: 999
+    - title: "Changelog"
+      regexp: (?i)(feat|feature|\[feature\]|\[feat\]|\bFEATURE\b|\[BUGFIX\]|\bBUGFIX\b|\[bugfix\])
+      order: 1
+    - title: "Other changes"
+      regexp: .*
+      order: 99
+
+  # filters:
+  #   - '^docs:'    
+  #   - '^chore:'
+
+release:
+  github:
+    owner: Rishab87     
+    name: kube-state-metrics      
+
+  prerelease: true
+  skip_upload: true
+
+  header: |
+    Changelog
+
+  footer: |
+    Full Changelog
+
+    - Compare: {{ .GitURL }}/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    New Contributors
+
+    {{- range .ReleaseNotesContributors }}
+    - @{{ . }}
+    {{- end }}
+
+  mode: replace
