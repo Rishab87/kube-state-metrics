@@ -2,19 +2,14 @@ version: 2
 
 builds: []
 
-archives:
-  - id: default
-    format: tar.gz
-    files:
-      - LICENSE
-      - README.md
+archives: []
 
 changelog:
   use: github
 
   groups:
     - title: "Changelog"
-      regexp: (?i)(feat|feature|\[feature\]|\[feat\]|\bFEATURE\b|\[BUGFIX\]|\bBUGFIX\b|\[bugfix\])
+      regexp: "(?i)(feat|feature|\\[feature\\]|\\[feat\\]|\\bFEATURE\\b|\\[BUGFIX\\]|\\bBUGFIX\\b|\\[bugfix\\])"
       order: 1
     - title: "Other changes"
       regexp: .*
@@ -29,7 +24,7 @@ release:
     owner: Rishab87     
     name: kube-state-metrics      
 
-  prerelease: true
+  prerelease: "true"
   skip_upload: true
 
   header: |
