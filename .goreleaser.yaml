@@ -7,18 +7,36 @@ archives: []
 
 changelog:
   use: github
-
+  sort: asc
+  format: "* {{.Message}} by @{{.AuthorUsername}} in <{{.ShortCommit}}>"
+  abbrev: -1
   groups:
-    - title: "Changelog"
-      regexp: "(?i)(feat|feature|\\[feature\\]|\\[feat\\]|\\bFEATURE\\b|\\[BUGFIX\\]|\\bBUGFIX\\b|\\[bugfix\\])"
+    - title: "Features"
+      regexp: "(?i)(feat|feature|\\[feature\\]|\\[feat\\]|\\bFEATURE\\b)"
       order: 1
-    - title: "Other changes"
-      regexp: .*
+    - title: "Bug Fixes"  
+      regexp: "(?i)(fix|bugfix|\\[bugfix\\]|\\[BUGFIX\\]|\\bBUGFIX\\b)"
+      order: 2
+    - title: "Documentation"
+      regexp: "(?i)(docs?|documentation|\\[docs?\\])"
+      order: 3
+    - title: "Dependencies"
+      regexp: "(?i)(build\\(deps\\)|bump|dependencies)"
+      order: 4
+    - title: "Maintenance"
+      regexp: "(?i)(chore|refactor|\\[chore\\])"
+      order: 5
+    - title: "Other Changes"
+      regexp: ".*"
       order: 99
 
-  # filters:
-  #   - '^docs:'    
-  #   - '^chore:'
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - 'merge conflict'
+      - 'Merge branch'
+      - 'Merge pull request'
 
 release:
   github:
@@ -29,17 +47,14 @@ release:
   skip_upload: true
 
   header: |
-    Changelog
+    ## {{ .Tag }} / {{ .Date }}
+    
+    ## Note
+    - This release builds with Go `v1.24.6`
+    - This release builds with `k8s.io/client-go`: `v0.33.4`
+    - This release is the last release that has endpoint metrics enabled by default. In the next release we will enable endpointslices metrics and disable endpoint metrics by default, since the endpoint resources are deprecated. You can still alter this behaviour in kube-state-metrics' config.
 
   footer: |
-    Full Changelog
-
-    - Compare: {{ .GitURL }}/compare/{{ .PreviousTag }}...{{ .Tag }}
-
-    New Contributors
-
-    {{- range .ReleaseNotesContributors }}
-    - @{{ . }}
-    {{- end }}
+    **Full Changelog**: {{ .GitURL }}/compare/{{ .PreviousTag }}...{{ .Tag }}
 
   mode: replace
