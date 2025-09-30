@@ -8,7 +8,6 @@ archives: []
 changelog:
   use: github
   sort: asc
-  abbrev: -1
   groups:
     - title: "Features"
       regexp: "(?i)(feat|feature|\\[feature\\]|\\[feat\\]|\\bFEATURE\\b)"
