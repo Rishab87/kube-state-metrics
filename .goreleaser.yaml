@@ -8,7 +8,6 @@ archives: []
 changelog:
   use: github
   sort: asc
-  format: "* {{.Message}} by @{{.AuthorUsername}} in <{{.ShortCommit}}>"
   abbrev: -1
   groups:
     - title: "Features"
