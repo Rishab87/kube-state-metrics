@@ -47,7 +47,7 @@ release:
   skip_upload: true
 
   header: |
-    ## {{ .Tag }} / {{ .Date }}
+    ## {{ .Tag }} / {{ .Date.Format "2006-01-02" }}
     
     ## Note
     - This release builds with Go `v1.24.6`
