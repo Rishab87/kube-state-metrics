@@ -3,13 +3,19 @@ version: 2
 builds:
   - skip: true
 
-archives: []
+archives:
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
 
 changelog:
   use: github
   sort: asc
-  format: "* {{.Message}} by @{{.AuthorUsername}} in <{{.ShortCommit}}>"
-  abbrev: -1
   groups:
     - title: "Features"
       regexp: "(?i)(feat|feature|\\[feature\\]|\\[feat\\]|\\bFEATURE\\b)"
@@ -47,11 +53,24 @@ release:
   skip_upload: true
 
   header: |
-    ## {{ .Tag }} / {{ .Date }}
+    ## {{ .Tag }} / {{ .Now.Format "2006-01-02" }}
+    
+    {{- if .Env.GO_VERSION }}
     
     ## Note
-    - This release builds with Go `v1.24.6`
-    - This release builds with `k8s.io/client-go`: `v0.33.4`
-    - This release is the last release that has endpoint metrics enabled by default. In the next release we will enable endpointslices metrics and disable endpoint metrics by default, since the endpoint resources are deprecated. You can still alter this behaviour in kube-state-metrics' config.
-    
+    - This release builds with Go `{{ .Env.GO_VERSION }}`
+    {{- end }}
+    {{- if .Env.K8S_CLIENT_VERSION }}
+    - This release builds with `k8s.io/client-go`: `{{ .Env.K8S_CLIENT_VERSION }}`
+    {{- end }}
+
+  footer: |
+    **Full Changelog**: {{ .GitURL }}/compare/{{ .PreviousTag }}...{{ .Tag }}
+
   mode: replace
+  
+  # If set, will create a release discussion in the category specified.
+  # Warning: do not use categories in the 'Announcement' format.
+  # Check https://github.com/goreleaser/goreleaser/issues/2304 for more info.
+  # Default: ''.
+  discussion_category_name: Releases
