@@ -54,7 +54,7 @@ jobs:
         run: ./scripts/update-data-yaml.sh "${{ inputs.new_version }}"
       - name: Update the compatibility matrix (README.md)
         run: make generate
-      - name: Generate the release date for unreleased (CHANGELOG.md)
+      - name: Move unreleased to released in CHANGELOG.md
         run: ./scripts/generate-release-date.sh "${{ inputs.new_version }}"
       - name: make lint-fix
         run: |
