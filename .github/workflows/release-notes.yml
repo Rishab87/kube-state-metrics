@@ -1,4 +1,4 @@
-name: Create prerelease on tag
+name: Pre-release
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  discussions: write
 
 jobs:
   build-and-create-prerelease:
@@ -16,14 +17,31 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: stable
-      - name: Run GoReleaser
+          go-version-file: 'go.mod'
+        id: go
+      - name: Extract versions from go.mod
+        id: versions
+        run: |
+          # Extract Go version from go.mod
+          GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
+          echo "go-version=${GO_VERSION}" >> $GITHUB_OUTPUT
+          
+          # Extract k8s.io/client-go version from go.mod
+          CLIENT_GO_VERSION=$(go list -m -f '{{.Version}}' k8s.io/client-go)
+          echo "client-go-version=${CLIENT_GO_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "📦 Go version: ${GO_VERSION}"
+          echo "📦 k8s.io/client-go version: ${CLIENT_GO_VERSION}"  
+      - name: Make pre-release
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: goreleaser release --clean
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GO_VERSION: ${{ steps.versions.outputs.go-version }}
+          K8S_CLIENT_VERSION: ${{ steps.versions.outputs.client-go-version }}
