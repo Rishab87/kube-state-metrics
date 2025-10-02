@@ -1,12 +1,10 @@
-# The purpose of this config is to keep all versions in a single file and make them machine accessible
+# This configuration tracks the last five releases, and acts as the source of truth for those entries in the README.
+#
+# This marks the latest release.
+version: "2.22.0"
 
-# Marks the latest release
-version: "2.17.0"
-
-# List at max 5 releases here + the main branch
+# List KSM-to-K8s version mapping for the last five releases here, and the default branch.
 compat:
-  - version: "v2.13.0"
-    kubernetes: "1.30"
   - version: "v2.14.0"
     kubernetes: "1.31"
   - version: "v2.15.0"
@@ -14,6 +12,8 @@ compat:
   - version: "v2.16.0"
     kubernetes: "1.32"
   - version: "v2.17.0"
+    kubernetes: "1.33"
+  - version: "v2.22.0"
     kubernetes: "1.33"
   - version: "main"
     kubernetes: "1.33"
