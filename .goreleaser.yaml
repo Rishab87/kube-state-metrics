@@ -55,13 +55,13 @@ release:
   header: |
     ## {{ .Tag }} / {{ .Now.Format "2006-01-02" }}
     
-    {{- if .Env.GO_VERSION }}
-    
+    {{- if index .Env "GO_VERSION" }}
     ## Note
-    - This release builds with Go `{{ .Env.GO_VERSION }}`
+    - This release builds with Go `{{ index .Env "GO_VERSION" }}`
     {{- end }}
-    {{- if .Env.K8S_CLIENT_VERSION }}
-    - This release builds with `k8s.io/client-go`: `{{ .Env.K8S_CLIENT_VERSION }}`
+
+    {{- if index .Env "K8S_CLIENT_VERSION" }}
+    - This release builds with `k8s.io/client-go`: `{{ index .Env "K8S_CLIENT_VERSION" }}`
     {{- end }}
 
   footer: |
