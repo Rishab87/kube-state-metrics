@@ -171,10 +171,7 @@ jobs:
             --title "chore: Cut ${{ inputs.new_version }}" \
             --body-file pr_body.txt \
             --base release-$MAJOR_MINOR_VERSION \
-            --head prep-${{ inputs.new_version }} \
-            --reviewer @sig-instrumentation-approvers \
-            --assignee @sig-instrumentation-leads
-          
+            --head prep-${{ inputs.new_version }}          
           # Clean up temporary file
           rm pr_body.txt
         env:
