@@ -50,7 +50,6 @@ release:
     name: kube-state-metrics      
 
   prerelease: "true"
-  skip_upload: true
 
   header: |
     ## {{ .Tag }} / {{ .Now.Format "2006-01-02" }}
