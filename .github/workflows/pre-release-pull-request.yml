@@ -51,9 +51,7 @@ jobs:
       - name: Update the VERSION manifest
         run: echo "${{ inputs.new_version }}" | sed 's/^v//' > VERSION
       - name: Update data.yaml
-        run: |
-          go install github.com/itchyny/gojq/cmd/gojq@latest
-          ./scripts/update-data-yaml.sh "${{ inputs.new_version }}"
+        run: ./scripts/update-data-yaml.sh "${{ inputs.new_version }}"
       - name: Update the compatibility matrix (README.md)
         run: make generate
       - name: Generate the release date for unreleased (CHANGELOG.md)
