@@ -25,13 +25,13 @@ jobs:
         id: extract_tag
         run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
         
-      - name: Create image promotion PR
-        run: |
-          kpromo pr --fork=${{ github.actor }} -i \
-            --project=kube-state-metrics \
-            --tag=${{ steps.extract_tag.outputs.tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Create image promotion PR
+      #   run: |
+      #     kpromo pr --fork=${{ github.actor }} -i \
+      #       --project=kube-state-metrics \
+      #       --tag=${{ steps.extract_tag.outputs.tag }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   merge-back-to-main:
     runs-on: ubuntu-latest
@@ -56,7 +56,5 @@ jobs:
             --body "Merge release changes from ${{ steps.extract_tag.outputs.tag }} back to main branch." \
             --base main \
             --head $RELEASE_BRANCH \
-            --reviewer @sig-instrumentation-approvers \
-            --assignee @sig-instrumentation-leads
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
