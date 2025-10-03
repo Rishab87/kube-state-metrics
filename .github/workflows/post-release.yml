@@ -7,31 +7,31 @@ permissions:
   pull-requests: write
 
 jobs:
-  promote-image:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # promote-image:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
         
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version-file: 'go.mod'
           
-      - name: Install kpromo
-        run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
+  #     # - name: Install kpromo
+  #     #   run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
         
-      - name: Extract release tag
-        id: extract_tag
-        run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+  #     - name: Extract release tag
+  #       id: extract_tag
+  #       run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
         
-      # - name: Create image promotion PR
-      #   run: |
-      #     kpromo pr --fork=${{ github.actor }} -i \
-      #       --project=kube-state-metrics \
-      #       --tag=${{ steps.extract_tag.outputs.tag }}
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     # - name: Create image promotion PR
+  #     #   run: |
+  #     #     kpromo pr --fork=${{ github.actor }} -i \
+  #     #       --project=kube-state-metrics \
+  #     #       --tag=${{ steps.extract_tag.outputs.tag }}
+  #     #   env:
+  #     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   merge-back-to-main:
     runs-on: ubuntu-latest
