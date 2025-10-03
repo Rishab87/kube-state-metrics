@@ -18,20 +18,29 @@ jobs:
   #       with:
   #         go-version-file: 'go.mod'
           
-  #     # - name: Install kpromo
-  #     #   run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
+  #     - name: Install kpromo
+  #       run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
         
-  #     - name: Extract release tag
+  #     - name: Get latest pre-release tag
   #       id: extract_tag
-  #       run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+  #       run: |
+  #         TAG=$(gh release list --limit 1 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease == true) | .tagName')
+  #         if [ -z "$TAG" ]; then
+  #           echo "Error: No pre-release found"
+  #           exit 1
+  #         fi
+  #         echo "tag=${TAG}" >> $GITHUB_OUTPUT
+  #         echo "Found pre-release tag: ${TAG}"
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-  #     # - name: Create image promotion PR
-  #     #   run: |
-  #     #     kpromo pr --fork=${{ github.actor }} -i \
-  #     #       --project=kube-state-metrics \
-  #     #       --tag=${{ steps.extract_tag.outputs.tag }}
-  #     #   env:
-  #     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Create image promotion PR
+  #       run: |
+  #         kpromo pr --fork=${{ github.actor }} -i \
+  #           --project=kube-state-metrics \
+  #           --tag=${{ steps.extract_tag.outputs.tag }}
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   merge-back-to-main:
     runs-on: ubuntu-latest
@@ -41,15 +50,36 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Extract release tag
+      - name: Get latest pre-release tag
         id: extract_tag
-        run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+        run: |
+          TAG=$(gh release list --limit 1 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease == true) | .tagName')
+          if [ -z "$TAG" ]; then
+            echo "Error: No pre-release found"
+            exit 1
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Found pre-release tag: ${TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Create PR to merge release changes back to main
         run: |
           # Extract major.minor for branch name
           MAJOR_MINOR=$(echo "${{ steps.extract_tag.outputs.tag }}" | sed 's/v//' | cut -d. -f1,2)
           RELEASE_BRANCH="release-${MAJOR_MINOR}"
+          
+          # Check if branches exist and have differences
+          if ! git rev-parse --verify "origin/${RELEASE_BRANCH}" >/dev/null 2>&1; then
+            echo "Error: Branch ${RELEASE_BRANCH} does not exist"
+            exit 1
+          fi
+          
+          # Check if there are commits to merge
+          if git merge-base --is-ancestor "origin/${RELEASE_BRANCH}" origin/main; then
+            echo "No commits to merge - ${RELEASE_BRANCH} is already merged into main"
+            exit 0
+          fi
           
           gh pr create \
             --title "chore: Merge ${{ steps.extract_tag.outputs.tag }} back to main" \
