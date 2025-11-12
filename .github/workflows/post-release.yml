@@ -7,40 +7,47 @@ permissions:
   pull-requests: write
 
 jobs:
-  # promote-image:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+  promote-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Go version
+        id: version
+        run: |
+          # Extract Go version from Dockerfile
+          GO_VERSION=$(grep '^ARG GOVERSION=' Dockerfile | cut -d'=' -f2)
+          echo "go-version=${GO_VERSION}" >> $GITHUB_OUTPUT
         
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version-file: 'go.mod'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ steps.version.outputs.go-version }}
           
-  #     - name: Install kpromo
-  #       run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
+      - name: Install kpromo
+        run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
         
-  #     - name: Get latest pre-release tag
-  #       id: extract_tag
-  #       run: |
-  #         TAG=$(gh release list --limit 1 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease == true) | .tagName')
-  #         if [ -z "$TAG" ]; then
-  #           echo "Error: No pre-release found"
-  #           exit 1
-  #         fi
-  #         echo "tag=${TAG}" >> $GITHUB_OUTPUT
-  #         echo "Found pre-release tag: ${TAG}"
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get latest pre-release tag
+        id: extract_tag
+        run: |
+          TAG=$(gh release list --limit 1 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease == true) | .tagName')
+          if [ -z "$TAG" ]; then
+            echo "Error: No pre-release found"
+            exit 1
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Found pre-release tag: ${TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-  #     - name: Create image promotion PR
-  #       run: |
-  #         kpromo pr --fork=${{ github.actor }} -i \
-  #           --project=kube-state-metrics \
-  #           --tag=${{ steps.extract_tag.outputs.tag }}
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create image promotion PR
+        run: |
+          kpromo pr --fork=${{ github.actor }} -i \
+            --project=kube-state-metrics \
+            --tag=${{ steps.extract_tag.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   merge-back-to-main:
     runs-on: ubuntu-latest
@@ -86,5 +93,7 @@ jobs:
             --body "Merge release changes from ${{ steps.extract_tag.outputs.tag }} back to main branch." \
             --base main \
             --head $RELEASE_BRANCH \
+            --reviewer @sig-instrumentation-approvers \
+            --assignee @sig-instrumentation-leads
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
