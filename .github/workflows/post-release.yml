@@ -43,9 +43,9 @@ jobs:
         
       - name: Create image promotion PR
         run: |
-          kpromo pr --fork=${{ github.actor }} -i \
+          kpromo pr --fork=${{ github.actor }} --interactive=false \
             --project=kube-state-metrics \
-            --tag=${{ steps.extract_tag.outputs.tag }}
+            --tag=v2.17.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
