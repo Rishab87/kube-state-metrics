@@ -23,7 +23,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: ${{ steps.version.outputs.go-version }}
+          go-version: ${{ steps.version.outputs.go-version }}
           
       - name: Install kpromo
         run: go install sigs.k8s.io/promo-tools/v4/cmd/kpromo@latest
