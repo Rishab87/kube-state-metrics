@@ -14,7 +14,6 @@ builds:
     hooks:
       pre: 
         - make OS={{ .Os }} ARCH={{ .Arch }} build
-    skip: true
 
 archives:
   - formats: [tar.gz]
