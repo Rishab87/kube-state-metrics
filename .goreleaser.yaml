@@ -15,6 +15,7 @@ builds:
       pre: 
         - make OS={{ .Os }} ARCH={{ .Arch }} build
 
+
 archives:
   - formats: [tar.gz]
     # this name template makes the OS and Arch compatible with the results of `uname`.

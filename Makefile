@@ -20,6 +20,7 @@ MULTI_ARCH_IMG = $(IMAGE)-$(ARCH)
 USER ?= $(shell id -u -n)
 HOST ?= $(shell hostname)
 MARKDOWNLINT_CLI2_VERSION = 0.18.1
+PWD ?= $(shell pwd)
 
 DOCKER_CLI ?= docker
 PROMTOOL_CLI ?= promtool
