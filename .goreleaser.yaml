@@ -1,19 +1,5 @@
 version: 2
 
-builds:
-  - id: kube-state-metrics
-    binary: kube-state-metrics
-    goos:
-      - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - arm64
-      - "386"
-    hooks:
-      pre: 
-        - make OS={{ .Os }} ARCH={{ .Arch }} build
 
 archives:
   - formats: [tar.gz]
@@ -74,6 +60,10 @@ release:
 
     {{- if index .Env "K8S_CLIENT_VERSION" }}
     - This release builds with `k8s.io/client-go`: `{{ index .Env "K8S_CLIENT_VERSION" }}`
+    {{- end }}
+
+    {{- if index .Env "GITHUB_ACTOR" }}
+    - Release coordinator: @{{ index .Env "GITHUB_ACTOR" }}
     {{- end }}
 
   footer: |
